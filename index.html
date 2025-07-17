@@ -8,7 +8,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%; height: 100%;
-      overflow: hidden;
+      overflow: hidden; /* Esto es clave para evitar scrollbars no deseados */
       font-family: 'Arial', sans-serif;
       background: linear-gradient(to bottom right, #ff1493, #ffd1dc);
     }
@@ -31,22 +31,24 @@
       box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
       animation: bounceMessage 0.5s ease, floatUp 10s ease forwards;
       pointer-events: none;
-      max-width: 80vw;
+      max-width: 80vw; /* El ancho máximo del 80% del viewport */
       word-break: break-word;
+      text-align: center; /* Centra el texto dentro del mensaje */
+      transform: translate(-50%, -50%); /* Centra el mensaje en el punto del clic */
     }
 
     @keyframes bounceMessage {
-      0% { transform: scale(0.2); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
+      0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
     }
 
     @keyframes floatUp {
-      0%   { transform: translateY(0);   opacity: 1; }
+      0%   { transform: translate(-50%, -50%) translateY(0);   opacity: 1; }
       20%  { opacity: 0.95; }
       40%  { opacity: 0.8; }
       60%  { opacity: 0.5; }
       80%  { opacity: 0.25; }
-      100% { transform: translateY(-80px); opacity: 0; }
+      100% { transform: translate(-50%, -50%) translateY(-80px); opacity: 0; }
     }
 
     .pop {
@@ -73,11 +75,12 @@
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
+    // Asegúrate de que este archivo 'pop.mp3' exista o cámbialo a un URL válido
     const sonidoPop = new Audio('pop.mp3');
 
     const mensajes = [
       'Anaís, eres una gran bendición. 🙏',
-      'Tu presencia é um presente. ✨',
+      'Tu presença é um presente. ✨',
       'Tu apoyo siempre me sostiene. 🤗',
       '你的善良是神圣的光芒。💖',
       'Siempre agradecido por tu compañía. 🙏',
@@ -97,7 +100,9 @@
       'You are capable of achieving everything. ✨',
       'Confía en el Señor de corazón. - Proverbios 3:5',
       'Ta foi est ma grande inspiration. 🙌',
+      'Dios guía cada uno de tus pasos. 👣',
       'Sei un tesoro inestimabile. 💎',
+      'Que tu camino sea próspero. 🍀',
       'Mi aprecio por ti es inmenso. 🥰',
     ];
 
@@ -106,10 +111,10 @@
     const total = 14;
 
     const coloresFijos = [
-      'rgba(255, 105, 180, 0.9)',
-      'rgba(173, 255, 47, 0.8)',
-      'rgba(255, 255, 0, 0.9)',
-      'rgba(147, 112, 219, 0.8)'
+      'rgba(255, 105, 180, 0.9)', /* Rosa */
+      'rgba(173, 255, 47, 0.8)',  /* Verde Neón/Lima */
+      'rgba(255, 255, 0, 0.9)',   /* Amarillo Brillante */
+      'rgba(147, 112, 219, 0.8)'  /* Morado/Púrpura */
     ];
 
     class Burbuja {
@@ -236,10 +241,39 @@
       const msg = document.createElement('div');
       msg.className = 'message';
       msg.innerText = mensajes[Math.floor(Math.random() * mensajes.length)];
-      msg.style.left = x + 'px';
-      msg.style.top = y + 'px';
       document.body.appendChild(msg);
-      setTimeout(() => msg.remove(), 10000);
+
+      // Calcular la posición para evitar que se salga de la pantalla
+      // Necesitamos que el mensaje esté en el DOM para obtener su ancho real
+      const msgWidth = msg.offsetWidth;
+      const msgHeight = msg.offsetHeight;
+
+      let finalX = x;
+      let finalY = y;
+
+      // Ajustar X para que el mensaje no se salga por la derecha
+      if (finalX + msgWidth / 2 > window.innerWidth) {
+        finalX = window.innerWidth - msgWidth / 2 - 10; // 10px de margen
+      }
+      // Ajustar X para que el mensaje no se salga por la izquierda
+      if (finalX - msgWidth / 2 < 0) {
+        finalX = msgWidth / 2 + 10; // 10px de margen
+      }
+
+      // Ajustar Y para que el mensaje no se salga por abajo
+      if (finalY + msgHeight / 2 > window.innerHeight) {
+        finalY = window.innerHeight - msgHeight / 2 - 10;
+      }
+      // Ajustar Y para que el mensaje no se salga por arriba (aunque ya flota hacia arriba)
+      if (finalY - msgHeight / 2 < 0) {
+          finalY = msgHeight / 2 + 10;
+      }
+
+
+      msg.style.left = finalX + 'px';
+      msg.style.top = finalY + 'px';
+
+      setTimeout(() => msg.remove(), 10000); // El mensaje desaparece después de 10 segundos
     }
 
     function mostrarExplosión(x, y) {
@@ -257,15 +291,22 @@
         const dy = e.clientY - b.y;
         if (Math.sqrt(dx * dx + dy * dy) < b.r && b.visible) {
           b.visible = false;
-          mostrarMensaje(b.x, b.y);
+          mostrarMensaje(b.x, b.y); // Usa la posición de la burbuja
           mostrarExplosión(b.x, b.y);
           crearSalpicadura(b.x, b.y, b.color);
           sonidoPop.currentTime = 0;
           sonidoPop.play();
-          setTimeout(() => b.visible = true, 10000);
+          setTimeout(() => b.visible = true, 10000); // La burbuja reaparece después de 10 segundos
           break;
         }
       }
+    });
+
+    // Ajustar el tamaño del canvas si la ventana cambia de tamaño
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        // Opcional: reposicionar burbujas si se salen de los límites
     });
 
     function animar() {
