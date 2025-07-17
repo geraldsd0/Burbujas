@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Burbujas de Amor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to bottom right, #ff1493, #ffd1dc);
+    }
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0; left: 0;
+      z-index: 0;
+    }
+
+    .message {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 12px 20px;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+      animation: bounceMessage 0.5s ease, floatUp 10s ease forwards;
+      pointer-events: none;
+    }
+
+    @keyframes bounceMessage {
+      0% { transform: scale(0.2); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes floatUp {
+      0%   { transform: translateY(0);   opacity: 1; }
+      20%  { opacity: 0.95; }
+      40%  { opacity: 0.8; }
+      60%  { opacity: 0.5; }
+      80%  { opacity: 0.25; }
+      100% { transform: translateY(-80px); opacity: 0; }
+    }
+
+    .pop {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.6);
+      width: 20px;
+      height: 20px;
+      animation: popExpand 0.5s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes popExpand {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(3); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const sonidoPop = new Audio('pop.mp3');
+
+    const mensajes = [
+      'Anaís, eres una gran bendición. 🙏',
+      'Tu presencia é um presente. ✨' ,
+      'Tu apoyo siempre me sostiene. 🤗',
+      '你的善良是神圣的光芒。💖' ,
+      'Siempre agradecido por tu compañía. 🙏',
+      'Ton sourire illumine ma journée. 😊' ,
+      'Que la paz de Dios te inunde. 🕊️',
+      'Eres un alma hermosa. 💫',
+      'My heart wishes you the best. 💕' ,
+      'Níss, tu fuerza me inspira. 💪',
+      'God bless your path. 🚶‍♀️' ,
+      'Η σοφία σου είναι ο φάρος μου. 💡' ,
+      'Nunca te dejaré ni desampararé. - Hebreos 13:5',
+      'En todo tiempo ama el amigo. - Proverbios 17:17',
+      'Sei un grande esempio di virtù. ❤️' ,
+      'Todo lo puedes en Cristo. - Filipenses 4:13',
+      'Con te la vita è più piena. 🌈' ,
+      'La alegría del Señor es tu fuerza. - Nehemías 8:10',
+      'You are capable of achieving everything. ✨' ,
+      'Confía en el Señor de corazón. - Proverbios 3:5',
+      'Ta foi est ma grande inspiration. 🙌' ,
+      'Sei un tesoro inestimabile. 💎',
+      'Mi aprecio por ti es inmenso. 🥰',
+    ];
+
+    const burbujas = [];
+    const salpicaduras = [];
+    const total = 14;
+
+    const coloresFijos = [
+      'rgba(255, 105, 180, 0.8)', // rosa/fucsia
+      'rgba(173, 255, 47, 0.8)',  // verde neón/lima
+      'rgba(255, 255, 0, 0.8)',   // amarillo brillante
+      'rgba(147, 112, 219, 0.8)'  // morado/púrpura
+    ];
+
+    class Burbuja {
+      constructor(x, y, r, dx, dy, color) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.dx = dx;
+        this.dy = dy;
+        this.color = color;
+        this.visible = true;
+      }
+
+      dibujar() {
+        if (!this.visible) return;
+
+        const grad = ctx.createRadialGradient(
+          this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.1,
+          this.x, this.y, this.r
+        );
+        grad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        grad.addColorStop(0.3, this.color);
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(this.x - this.r * 0.3, this.y - this.r * 0.3, this.r * 0.2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.fill();
+      }
+
+      mover() {
+        if (!this.visible) return;
+        this.x += this.dx;
+        this.y += this.dy;
+
+        if (this.x + this.r > canvas.width || this.x - this.r < 0) this.dx *= -1;
+        if (this.y + this.r > canvas.height || this.y - this.r < 0) this.dy *= -1;
+      }
+    }
+
+    class Particula {
+      constructor(x, y, angle, color) {
+        this.x = x;
+        this.y = y;
+        this.vx = Math.cos(angle) * (Math.random() * 3 + 2);
+        this.vy = Math.sin(angle) * (Math.random() * 3 + 2);
+        this.alpha = 1;
+        this.color = color;
+        this.size = 4 + Math.random() * 2;
+      }
+
+      actualizar() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= 0.03;
+      }
+
+      dibujar() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color.replace('0.6', this.alpha.toFixed(2));
+        ctx.fill();
+      }
+
+      estaViva() {
+        return this.alpha > 0;
+      }
+    }
+
+    function crearSalpicadura(x, y, color) {
+      for (let i = 0; i < 10; i++) {
+        const angle = (Math.PI * 2) * (i / 10);
+        salpicaduras.push(new Particula(x, y, angle, color));
+      }
+    }
+
+    function crearBurbujas() {
+      for (let i = 0; i < total; i++) {
+        let r = 40 + Math.random() * 25;
+        let x = Math.random() * (canvas.width - r * 2) + r;
+        let y = Math.random() * (canvas.height - r * 2) + r;
+        let dx = (Math.random() - 0.5) * 2;
+        let dy = (Math.random() - 0.5) * 2;
+        let color = coloresFijos[Math.floor(Math.random() * coloresFijos.length)];
+        burbujas.push(new Burbuja(x, y, r, dx, dy, color));
+      }
+    }
+
+    function detectarColisiones() {
+      for (let i = 0; i < burbujas.length; i++) {
+        for (let j = i + 1; j < burbujas.length; j++) {
+          const b1 = burbujas[i];
+          const b2 = burbujas[j];
+          if (!b1.visible || !b2.visible) continue;
+
+          const dx = b1.x - b2.x;
+          const dy = b1.y - b2.y;
+          const distancia = Math.sqrt(dx * dx + dy * dy);
+          const sumaRadios = b1.r + b2.r;
+
+          if (distancia < sumaRadios) {
+            const sobreposicion = (sumaRadios - distancia) / 2;
+            const nx = dx / distancia;
+            const ny = dy / distancia;
+
+            b1.x += nx * sobreposicion;
+            b1.y += ny * sobreposicion;
+            b2.x -= nx * sobreposicion;
+            b2.y -= ny * sobreposicion;
+
+            [b1.dx, b2.dx] = [b2.dx, b1.dx];
+            [b1.dy, b2.dy] = [b2.dy, b1.dy];
+          }
+        }
+      }
+    }
+
+    function mostrarMensaje(x, y) {
+      const msg = document.createElement('div');
+      msg.className = 'message';
+      msg.innerText = mensajes[Math.floor(Math.random() * mensajes.length)];
+      msg.style.left = x + 'px';
+      msg.style.top = y + 'px';
+      document.body.appendChild(msg);
+      setTimeout(() => msg.remove(), 10000);
+    }
+
+    function mostrarExplosión(x, y) {
+      const pop = document.createElement('div');
+      pop.className = 'pop';
+      pop.style.left = (x - 10) + 'px';
+      pop.style.top = (y - 10) + 'px';
+      document.body.appendChild(pop);
+      setTimeout(() => pop.remove(), 500);
+    }
+
+    canvas.addEventListener('click', (e) => {
+      for (let b of burbujas) {
+        const dx = e.clientX - b.x;
+        const dy = e.clientY - b.y;
+        if (Math.sqrt(dx * dx + dy * dy) < b.r && b.visible) {
+          b.visible = false;
+          mostrarMensaje(b.x, b.y);
+          mostrarExplosión(b.x, b.y);
+          crearSalpicadura(b.x, b.y, b.color);
+          sonidoPop.currentTime = 0;
+          sonidoPop.play();
+          setTimeout(() => b.visible = true, 10000);
+          break;
+        }
+      }
+    });
+
+    function animar() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let b of burbujas) {
+        b.dibujar();
+        b.mover();
+      }
+
+      for (let i = salpicaduras.length - 1; i >= 0; i--) {
+        const p = salpicaduras[i];
+        p.actualizar();
+        p.dibujar();
+        if (!p.estaViva()) {
+          salpicaduras.splice(i, 1);
+        }
+      }
+
+      detectarColisiones();
+      requestAnimationFrame(animar);
+    }
+
+    crearBurbujas();
+    animar();
+  </script>
+</body>
+</html>
