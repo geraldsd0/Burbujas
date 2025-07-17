@@ -31,6 +31,8 @@
       box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
       animation: bounceMessage 0.5s ease, floatUp 10s ease forwards;
       pointer-events: none;
+      max-width: 80vw;
+      word-break: break-word;
     }
 
     @keyframes bounceMessage {
@@ -65,7 +67,6 @@
 </head>
 <body>
   <canvas id="canvas"></canvas>
-
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
@@ -76,26 +77,26 @@
 
     const mensajes = [
       'Anaís, eres una gran bendición. 🙏',
-      'Tu presencia é um presente. ✨' ,
+      'Tu presencia é um presente. ✨',
       'Tu apoyo siempre me sostiene. 🤗',
-      '你的善良是神圣的光芒。💖' ,
+      '你的善良是神圣的光芒。💖',
       'Siempre agradecido por tu compañía. 🙏',
-      'Ton sourire illumine ma journée. 😊' ,
+      'Ton sourire illumine ma journée. 😊',
       'Que la paz de Dios te inunde. 🕊️',
       'Eres un alma hermosa. 💫',
-      'My heart wishes you the best. 💕' ,
+      'My heart wishes you the best. 💕',
       'Níss, tu fuerza me inspira. 💪',
-      'God bless your path. 🚶‍♀️' ,
-      'Η σοφία σου είναι ο φάρος μου. 💡' ,
+      'God bless your path. 🚶‍♀️',
+      'Η σοφία σου είναι ο φάρος μου. 💡',
       'Nunca te dejaré ni desampararé. - Hebreos 13:5',
       'En todo tiempo ama el amigo. - Proverbios 17:17',
-      'Sei un grande esempio di virtù. ❤️' ,
+      'Sei un grande esempio di virtù. ❤️',
       'Todo lo puedes en Cristo. - Filipenses 4:13',
-      'Con te la vita è più piena. 🌈' ,
+      'Con te la vita è più piena. 🌈',
       'La alegría del Señor es tu fuerza. - Nehemías 8:10',
-      'You are capable of achieving everything. ✨' ,
+      'You are capable of achieving everything. ✨',
       'Confía en el Señor de corazón. - Proverbios 3:5',
-      'Ta foi est ma grande inspiration. 🙌' ,
+      'Ta foi est ma grande inspiration. 🙌',
       'Sei un tesoro inestimabile. 💎',
       'Mi aprecio por ti es inmenso. 🥰',
     ];
@@ -105,10 +106,10 @@
     const total = 14;
 
     const coloresFijos = [
-      'rgba(255, 105, 180, 0.8)', // rosa/fucsia
-      'rgba(173, 255, 47, 0.8)',  // verde neón/lima
-      'rgba(255, 255, 0, 0.8)',   // amarillo brillante
-      'rgba(147, 112, 219, 0.8)'  // morado/púrpura
+      'rgba(255, 105, 180, 0.9)',
+      'rgba(173, 255, 47, 0.8)',
+      'rgba(255, 255, 0, 0.9)',
+      'rgba(147, 112, 219, 0.8)'
     ];
 
     class Burbuja {
